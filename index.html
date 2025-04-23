@@ -2,118 +2,65 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Google Gantt 圖產生器</title>
-  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <title>JS 轉換完整 HTML</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       padding: 2rem;
-      background: #f8f9fa;
-      color: #212529;
+      background: #f0f2f5;
     }
     textarea {
       width: 100%;
-      height: 150px;
-      margin-top: 10px;
+      height: 200px;
       font-family: monospace;
-      font-size: 0.95rem;
       padding: 10px;
-      border: 1px solid #ced4da;
-      border-radius: 0.375rem;
-      background: #fff;
+      border-radius: 0.5rem;
+      border: 1px solid #ccc;
+      margin-top: 1rem;
     }
     button {
+      padding: 10px 20px;
       margin-top: 1rem;
-      padding: 0.6rem 1.2rem;
-      font-size: 1rem;
-      background-color: #0d6efd;
+      background: #0d6efd;
       color: white;
       border: none;
       border-radius: 0.375rem;
       cursor: pointer;
     }
-    #chart_div {
-      margin-top: 2rem;
-      border: 1px solid #ccc;
-      padding: 1rem;
-      background: white;
-    }
-    #html_output {
-      margin-top: 2rem;
-      height: 200px;
-    }
   </style>
 </head>
 <body>
-  <h2>🛠 Google Gantt 圖產生器</h2>
-  <label>輸入任務資料（每行：名稱,開始日,結束日,完成度,資源）</label>
-  <textarea id="taskInput" placeholder="各課帳號權限開立,2025-03-17,2025-03-20,100,spring\n資料庫串接,2025-03-20,2025-04-20,100,summer"></textarea>
+  <h2>🔧 Gantt JS 程式碼 → HTML 包裝轉換器</h2>
+  <label>請貼上 <code>drawChart</code> 函數的 JavaScript 程式碼：</label>
+  <textarea id="jsInput" placeholder="貼上像這樣的程式碼：function drawChart() {...}"></textarea>
   <br>
-  <button onclick="drawGanttChart()">產生 Gantt 圖</button>
+  <button onclick="wrapIntoHtml()">產生完整 HTML</button>
 
-  <div id="chart_div"></div>
+  <label>📄 產生的 HTML：</label>
+  <textarea id="htmlOutput" readonly></textarea>
 
-  <label>🔽 對應 HTML 程式碼</label>
-  <textarea id="html_output" readonly></textarea>
-
+  <script>
+    function wrapIntoHtml() {
+      const jsCode = document.getElementById('jsInput').value.trim();
+      const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Gantt Chart</title>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script type="text/javascript">
     google.charts.load('current', {'packages':['gantt']});
+    google.charts.setOnLoadCallback(drawChart);
+    ${jsCode}
+  </script>
+</head>
+<body>
+  <h2>📊 Gantt 圖示範</h2>
+  <div id="chart_div" style="margin-top:2rem; padding:1rem; border:1px solid #ccc;"></div>
+</body>
+</html>`;
 
-    function drawGanttChart() {
-      google.charts.setOnLoadCallback(() => {
-        const input = document.getElementById('taskInput').value.trim().split('\n');
-        const data = new google.visualization.DataTable();
-
-        data.addColumn('string', 'Task ID');
-        data.addColumn('string', 'Task Name');
-        data.addColumn('string', 'Resource');
-        data.addColumn('date', 'Start Date');
-        data.addColumn('date', 'End Date');
-        data.addColumn('number', 'Duration');
-        data.addColumn('number', 'Percent Complete');
-        data.addColumn('string', 'Dependencies');
-
-        let htmlTasks = '';
-
-        input.forEach((line, i) => {
-          const [name, start, end, percent, resource] = line.split(',').map(p => p.trim());
-          const startDate = new Date(start);
-          const endDate = new Date(end);
-          data.addRow([
-            i.toString(), name, resource, startDate, endDate, null, Number(percent), null
-          ]);
-          htmlTasks += `        ['${i}', '${name}', '${resource}', new Date(${startDate.getFullYear()}, ${startDate.getMonth()}, ${startDate.getDate()}), new Date(${endDate.getFullYear()}, ${endDate.getMonth()}, ${endDate.getDate()}), null, ${percent}, null],\n`;
-        });
-
-        const options = {
-          height: 400,
-          gantt: {
-            trackHeight: 30
-          }
-        };
-
-        const chart = new google.visualization.Gantt(document.getElementById('chart_div'));
-        chart.draw(data, options);
-
-        const htmlOutput = `google.charts.load('current', {'packages':['gantt']});\n` +
-          `google.charts.setOnLoadCallback(drawChart);\n\n` +
-          `function drawChart() {\n` +
-          `  var data = new google.visualization.DataTable();\n` +
-          `  data.addColumn('string', 'Task ID');\n` +
-          `  data.addColumn('string', 'Task Name');\n` +
-          `  data.addColumn('string', 'Resource');\n` +
-          `  data.addColumn('date', 'Start Date');\n` +
-          `  data.addColumn('date', 'End Date');\n` +
-          `  data.addColumn('number', 'Duration');\n` +
-          `  data.addColumn('number', 'Percent Complete');\n` +
-          `  data.addColumn('string', 'Dependencies');\n\n` +
-          `  data.addRows([\n` + htmlTasks + `  ]);\n\n` +
-          `  var options = { height: 400, gantt: { trackHeight: 30 } };\n` +
-          `  var chart = new google.visualization.Gantt(document.getElementById('chart_div'));
-  chart.draw(data, options);\n}`;
-
-        document.getElementById('html_output').value = htmlOutput;
-      });
+      document.getElementById('htmlOutput').value = fullHtml;
     }
   </script>
 </body>
